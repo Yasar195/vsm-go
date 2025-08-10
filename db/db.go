@@ -18,7 +18,7 @@ type Product struct {
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	dsn := "postgresql://visitor_management_owner:npg_rbO7VD4ndsgw@ep-purple-smoke-a1hk87z2-pooler.ap-southeast-1.aws.neon.tech/visitor_management?sslmode=require&channel_binding=require"
+	dsn := ""
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
