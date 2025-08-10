@@ -1,0 +1,29 @@
+package authenticationcontroller
+
+import (
+	"net/http"
+
+	authenticationservice "visitor-management-system/iam/authentication/service"
+
+	"github.com/gin-gonic/gin"
+)
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+func Login(c *gin.Context) {
+	var body struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp := authenticationservice.Login(body.Email, body.Password)
+	c.JSON(resp.StatusCode, resp)
+}
