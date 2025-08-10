@@ -13,6 +13,10 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json: "refreshToken", binding:"required"`
+}
+
 func Login(c *gin.Context) {
 	var body struct {
 		Email    string `json:"email"`
@@ -25,5 +29,18 @@ func Login(c *gin.Context) {
 	}
 
 	resp := authenticationservice.Login(body.Email, body.Password)
+	c.JSON(resp.StatusCode, resp)
+}
+
+func TokenRefresh(c *gin.Context) {
+	var body struct {
+		RefreshToken string `json: "refreshToken"`
+	}
+
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	resp := authenticationservice.RefreshToken(body.RefreshToken)
 	c.JSON(resp.StatusCode, resp)
 }
