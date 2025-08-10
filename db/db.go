@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"os"
 	"visitor-management-system/db/schema"
 	"visitor-management-system/utility"
 
@@ -18,7 +19,7 @@ type Product struct {
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	dsn := ""
+	dsn := os.Getenv("DATABASE_URL")
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -47,16 +48,16 @@ func ConnectDatabase() {
 		println("No users found, inserting default user...")
 
 		emailConfig := utility.EmailConfig{
-			SMTPHost:     "smtp.gmail.com",
+			SMTPHost:     os.Getenv("SMTP_HOST"),
 			SMTPPort:     587,
-			SMTPUsername: "testsystem144@gmail.com",
-			SMTPPassword: "qvux axlg xdhp ugha",
-			FromEmail:    "testsystem144@gmail.com",
+			SMTPUsername: os.Getenv("ADMIN_EMAIL"),
+			SMTPPassword: os.Getenv("ADMIN_PASSWORD"),
+			FromEmail:    os.Getenv("ADMIN_EMAIL"),
 		}
 
 		emailService := utility.NewEmailService(emailConfig)
 
-		err := emailService.SendEmail("imyasar07@gmail.com", "admin created", "Hi\nNew admin create\n\nemail: imyasar07@gmail.com\npassword: admin@123")
+		err := emailService.SendEmail(os.Getenv("ADMIN_EMAIL"), "admin created", "Hi\nNew admin create\n\nemail: imyasar07@gmail.com\npassword: admin@123")
 
 		if err != nil {
 			panic("error sending email")

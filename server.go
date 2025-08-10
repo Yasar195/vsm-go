@@ -9,11 +9,12 @@ import (
 )
 
 func main() {
-	db.ConnectDatabase()
-	err := godotenv.Load()
+	err := godotenv.Load(".env")
 	if err != nil {
 		panic("Error loading env files")
 	}
+
+	db.ConnectDatabase()
 
 	router := gin.Default()
 
