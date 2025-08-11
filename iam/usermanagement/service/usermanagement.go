@@ -36,7 +36,7 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 		}
 	}
 
-	cerr := db.DB.Model(&schema.Users{}).Where("id != ?", data.UserId).Count(&count).Error
+	cerr := db.DB.Model(&schema.Users{}).Where("id != ?", data.UserId).Where("username ILIKE ?", "%"+data.Search+"%").Count(&count).Error
 
 	if cerr != nil {
 		return utility.Response[GetUserResponse]{
