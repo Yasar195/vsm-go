@@ -24,7 +24,7 @@ func main() {
 	auth := router.Group("/auth")
 	{
 		auth.POST("/login", authenticationcontroller.Login)
-		auth.POST("/refresh", authenticationcontroller.TokenRefresh)
+		auth.POST("/refresh", middlewares.AuthMiddleware(), authenticationcontroller.TokenRefresh)
 	}
 
 	user := router.Group("/users")
