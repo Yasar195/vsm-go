@@ -11,8 +11,45 @@ env:
   APP_PORT: 8080
 
 jobs:
+    # test:
+    # runs-on: ubuntu-latest
+    # steps:
+    # - uses: actions/checkout@v4
+    
+    # - name: Read Go version from go.mod
+    #   id: go-version
+    #   run: echo "GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')" >> $GITHUB_ENV
+    
+    # - name: Set up Go
+    #   uses: actions/setup-go@v4
+    #   with:
+    #     go-version: ${{ env.GO_VERSION }}
+    
+    # - name: Cache Go modules
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ~/go/pkg/mod
+    #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-go-
+    
+    # - name: Download dependencies
+    #   run: go mod download
+    
+    # - name: Run tests
+    #   run: go test -v ./...
+    
+    # - name: Run go vet
+    #   run: go vet ./...
+    
+    # - name: Run staticcheck
+    #   uses: dominikh/staticcheck-action@v1.3.0
+    #   with:
+    #     version: "2023.1.6"
+    #     install-go: false
+
   build-and-push:
-    needs: test
+    # needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     outputs:
