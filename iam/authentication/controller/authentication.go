@@ -34,7 +34,7 @@ func Login(c *gin.Context) {
 
 func TokenRefresh(c *gin.Context) {
 	var body struct {
-		RefreshToken string `json: "refreshToken"`
+		RefreshToken string `json:"refreshToken"`
 	}
 
 	if err := c.BindJSON(&body); err != nil {
