@@ -140,16 +140,16 @@ jobs:
       if: always()
       run: rm -rf ~/.ssh/id_rsa
 
-  notify:
-    needs: [test, build-and-push, deploy]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-    - name: Notify deployment status
-      run: |
-        if [ "${{ needs.deploy.result }}" == "success" ]; then
-          echo "🎉 Deployment successful!"
-        else
-          echo "❌ Deployment failed!"
-          exit 1
-        fi
+  # notify:
+  #   needs: [test, build-and-push, deploy]
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   steps:
+  #   - name: Notify deployment status
+  #     run: |
+  #       if [ "${{ needs.deploy.result }}" == "success" ]; then
+  #         echo "🎉 Deployment successful!"
+  #       else
+  #         echo "❌ Deployment failed!"
+  #         exit 1
+  #       fi
