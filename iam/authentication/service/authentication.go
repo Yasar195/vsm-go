@@ -54,8 +54,8 @@ func Login(email string, password string) utility.Response[LoginResponse] {
 		secret = "dev-secret"
 	}
 
-	refreshsecret := os.Getenv("JWT_SECRET")
-	if secret == "" {
+	refreshsecret := os.Getenv("JWT_REFRESH_SECRET")
+	if refreshsecret == "" {
 		refreshsecret = "dev-refreshsecret"
 	}
 
@@ -100,9 +100,8 @@ func Login(email string, password string) utility.Response[LoginResponse] {
 }
 
 func RefreshToken(refreshToken string) utility.Response[RefreshTokenResponse] {
-	var refreshSecret = []byte(os.Getenv("JWT_SECRET"))
+	var refreshSecret = []byte(os.Getenv("JWT_REFRESH_SECRET"))
 	parsedToken, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
-		// Validate signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

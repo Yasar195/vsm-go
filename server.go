@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"visitor-management-system/db"
 	authenticationcontroller "visitor-management-system/iam/authentication/controller"
+	usermanagementcontroller "visitor-management-system/iam/usermanagement/controller"
+	middlewares "visitor-management-system/middlewares"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -23,6 +25,12 @@ func main() {
 	{
 		auth.POST("/login", authenticationcontroller.Login)
 		auth.POST("/refresh", authenticationcontroller.TokenRefresh)
+	}
+
+	user := router.Group("/users")
+	user.Use(middlewares.AuthMiddleware())
+	{
+		user.GET("/", usermanagementcontroller.GetUsers)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {

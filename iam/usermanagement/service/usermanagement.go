@@ -1,0 +1,61 @@
+package usermanagementservice
+
+import (
+	"visitor-management-system/db"
+	"visitor-management-system/db/schema"
+	"visitor-management-system/utility"
+)
+
+type GetUserRequest struct {
+	UserId   int64
+	PageSize int64
+	Page     int64
+	Search   string
+}
+
+type GetUserResponse struct {
+	Users []schema.Users `json:"users"`
+	Count int64          `json:"count"`
+}
+
+func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
+
+	offset := (data.Page - 1) * data.PageSize
+	var users []schema.Users
+	var count int64
+
+	err := db.DB.Model(&schema.Users{}).Where("id != ?", data.UserId).Where("username ILIKE ?", "%"+data.Search+"%").Offset(int(offset)).Limit(int(data.PageSize)).Find(&users).Error
+
+	if err != nil {
+		return utility.Response[GetUserResponse]{
+			Success:    false,
+			Message:    "failed to fetch users",
+			Error:      err.Error(),
+			StatusCode: 500,
+			Data:       nil,
+		}
+	}
+
+	cerr := db.DB.Model(&schema.Users{}).Where("id != ?", data.UserId).Count(&count).Error
+
+	if cerr != nil {
+		return utility.Response[GetUserResponse]{
+			Success:    false,
+			Message:    "failed to fetch users",
+			Error:      err.Error(),
+			StatusCode: 500,
+			Data:       nil,
+		}
+	}
+
+	return utility.Response[GetUserResponse]{
+		Success:    true,
+		Message:    "users fetched successfully",
+		StatusCode: 200,
+		Data: &GetUserResponse{
+			Users: users,
+			Count: count,
+		},
+	}
+
+}
