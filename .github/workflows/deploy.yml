@@ -2,12 +2,12 @@ name: Go Container CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  CONTAINER_NAME: go-app
+  CONTAINER_NAME: vsm
   APP_PORT: 8080
 
 jobs:
