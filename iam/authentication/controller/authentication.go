@@ -14,7 +14,7 @@ type LoginRequest struct {
 }
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json: "refreshToken", binding:"required"`
+	RefreshToken string `json:"refreshToken" binding:"required"`
 }
 
 func Login(c *gin.Context) {
