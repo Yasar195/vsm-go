@@ -1,6 +1,6 @@
 FROM golang:1.24-alpine AS builder
 ENV CGO_ENABLED=0 GOOS=linux
-# Remove GOARCH=amd64 to let Docker handle architecture automatically
+# Remove GOARCH=amd64 - let buildx handle it automatically
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
