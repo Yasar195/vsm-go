@@ -16,10 +16,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Read Go version from go.mod
+      id: go-version
+      run: echo "GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')" >> $GITHUB_ENV
+    
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.24'
+        go-version: ${{ env.GO_VERSION }}
     
     - name: Cache Go modules
       uses: actions/cache@v3
@@ -46,7 +50,7 @@ jobs:
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
     steps:
@@ -89,7 +93,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -104,35 +108,23 @@ jobs:
     - name: Deploy to remote server
       run: |
         ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-          # Stop and remove existing container
           docker stop ${{ env.CONTAINER_NAME }} || true
           docker rm ${{ env.CONTAINER_NAME }} || true
-          
-          # Remove old image
           docker rmi ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || true
-          
-          # Pull latest image
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          
-          # Run new container
           docker run -d \
             --name ${{ env.CONTAINER_NAME }} \
             --restart unless-stopped \
             -p ${{ env.APP_PORT }}:${{ env.APP_PORT }} \
             -e ENVIRONMENT=production \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          
-          # Clean up unused images
           docker image prune -f
         EOF
     
     - name: Verify deployment
       run: |
         ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-          # Wait for container to be ready
           sleep 10
-          
-          # Check if container is running
           if docker ps | grep -q ${{ env.CONTAINER_NAME }}; then
             echo "✅ Container is running successfully"
             docker ps | grep ${{ env.CONTAINER_NAME }}
@@ -141,9 +133,6 @@ jobs:
             docker logs ${{ env.CONTAINER_NAME }}
             exit 1
           fi
-          
-          # Optional: Health check
-          # curl -f http://localhost:${{ env.APP_PORT }}/health || exit 1
         EOF
     
     - name: Clean up SSH
