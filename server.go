@@ -71,7 +71,11 @@ func setupRouter() *gin.Engine {
 
 // Lambda handler function
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	fmt.Println("Incoming path:", req.Path)
+	fmt.Printf("==== RAW EVENT ====\n%+v\n\n", req)
+	fmt.Println("req.Path:", req.Path)
+	fmt.Println("req.RawPath:", req)
+	fmt.Println("req.Resource:", req.Resource)
+	fmt.Println("req.StageVariables:", req.StageVariables)
 	return ginLambda.ProxyWithContext(ctx, req)
 }
 
