@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"visitor-management-system/db"
@@ -71,11 +70,9 @@ func setupRouter() *gin.Engine {
 
 // Lambda handler function
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	fmt.Printf("==== RAW EVENT ====\n%+v\n\n", req)
-	fmt.Println("req.Path:", req.Path)
-	fmt.Println("req.RawPath:", req)
-	fmt.Println("req.Resource:", req.Resource)
-	fmt.Println("req.StageVariables:", req.StageVariables)
+	if req.Path == "" && len(req.PathParameters["proxy"]) > 0 {
+		req.Path = "/" + req.PathParameters["proxy"]
+	}
 	return ginLambda.ProxyWithContext(ctx, req)
 }
 
