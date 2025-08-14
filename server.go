@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"visitor-management-system/db"
 	authenticationcontroller "visitor-management-system/iam/authentication/controller"
 	usermanagementcontroller "visitor-management-system/iam/usermanagement/controller"
@@ -71,19 +72,45 @@ func setupRouter() *gin.Engine {
 
 // Lambda handler function
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	fmt.Printf("Method: %s, Path: %s, Resource: %s\n", req.HTTPMethod, req.Path, req.Resource)
+	// Debug logging - enhanced
+	fmt.Printf("Original Request - Method: '%s', Path: '%s', Resource: '%s'\n", req.HTTPMethod, req.Path, req.Resource)
+	fmt.Printf("RequestContext - Method: '%s', Path: '%s'\n", req.RequestContext.HTTPMethod, req.RequestContext.Path)
+	fmt.Printf("PathParameters: %+v\n", req.PathParameters)
 
+	// Fix HTTP Method - try multiple sources
+	if req.HTTPMethod == "" {
+		if req.RequestContext.HTTPMethod != "" {
+			req.HTTPMethod = req.RequestContext.HTTPMethod
+		} else {
+			// Fallback to headers
+			if method, exists := req.Headers["X-HTTP-Method-Override"]; exists {
+				req.HTTPMethod = method
+			} else if method, exists := req.Headers["x-http-method-override"]; exists {
+				req.HTTPMethod = method
+			} else {
+				// Last resort - default to GET for safety
+				req.HTTPMethod = "GET"
+			}
+		}
+	}
+
+	// Fix Path
 	if req.Path == "" {
-		if proxy, exists := req.PathParameters["proxy"]; exists && proxy != "" {
+		if req.RequestContext.Path != "" {
+			req.Path = req.RequestContext.Path
+		} else if proxy, exists := req.PathParameters["proxy"]; exists && proxy != "" {
 			req.Path = "/" + proxy
 		} else {
 			req.Path = "/"
 		}
 	}
 
-	if req.HTTPMethod == "" {
-		req.HTTPMethod = req.RequestContext.HTTPMethod
+	// Remove trailing slash if present (except for root)
+	if req.Path != "/" && strings.HasSuffix(req.Path, "/") {
+		req.Path = strings.TrimSuffix(req.Path, "/")
 	}
+
+	fmt.Printf("Final Request - Method: '%s', Path: '%s'\n", req.HTTPMethod, req.Path)
 
 	return ginLambda.ProxyWithContext(ctx, req)
 }
