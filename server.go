@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"visitor-management-system/db"
 	authenticationcontroller "visitor-management-system/iam/authentication/controller"
 	usermanagementcontroller "visitor-management-system/iam/usermanagement/controller"
@@ -70,49 +69,55 @@ func setupRouter() *gin.Engine {
 	return router
 }
 
-// Lambda handler function
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	// Debug logging - enhanced
-	fmt.Printf("Original Request - Method: '%s', Path: '%s', Resource: '%s'\n", req.HTTPMethod, req.Path, req.Resource)
-	fmt.Printf("RequestContext - Method: '%s', Path: '%s'\n", req.RequestContext.HTTPMethod, req.RequestContext.Path)
-	fmt.Printf("PathParameters: %+v\n", req.PathParameters)
+func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	// Debug logging
+	fmt.Printf("HTTP API v2 Request - Method: '%s', RawPath: '%s'\n", req.RequestContext.HTTP.Method, req.RawPath)
+	fmt.Printf("RouteKey: '%s'\n", req.RouteKey)
 
-	// Fix HTTP Method - try multiple sources
-	if req.HTTPMethod == "" {
-		if req.RequestContext.HTTPMethod != "" {
-			req.HTTPMethod = req.RequestContext.HTTPMethod
-		} else {
-			// Fallback to headers
-			if method, exists := req.Headers["X-HTTP-Method-Override"]; exists {
-				req.HTTPMethod = method
-			} else if method, exists := req.Headers["x-http-method-override"]; exists {
-				req.HTTPMethod = method
-			} else {
-				// Last resort - default to GET for safety
-				req.HTTPMethod = "GET"
-			}
-		}
+	// Convert HTTP API v2 request to v1 format that gin-lambda-adapter expects
+	v1Request := events.APIGatewayProxyRequest{
+		HTTPMethod:      req.RequestContext.HTTP.Method,
+		Path:            req.RawPath,
+		Resource:        req.RouteKey,
+		Headers:         req.Headers,
+		Body:            req.Body,
+		IsBase64Encoded: req.IsBase64Encoded,
+		RequestContext: events.APIGatewayProxyRequestContext{
+			HTTPMethod: req.RequestContext.HTTP.Method,
+			Path:       req.RawPath,
+		},
 	}
 
-	// Fix Path
-	if req.Path == "" {
-		if req.RequestContext.Path != "" {
-			req.Path = req.RequestContext.Path
-		} else if proxy, exists := req.PathParameters["proxy"]; exists && proxy != "" {
-			req.Path = "/" + proxy
-		} else {
-			req.Path = "/"
-		}
+	// Handle path parameters
+	if req.PathParameters != nil {
+		v1Request.PathParameters = req.PathParameters
 	}
 
-	// Remove trailing slash if present (except for root)
-	if req.Path != "/" && strings.HasSuffix(req.Path, "/") {
-		req.Path = strings.TrimSuffix(req.Path, "/")
+	// Handle query string parameters
+	if req.QueryStringParameters != nil {
+		v1Request.QueryStringParameters = req.QueryStringParameters
 	}
 
-	fmt.Printf("Final Request - Method: '%s', Path: '%s'\n", req.HTTPMethod, req.Path)
+	fmt.Printf("Converted - Method: '%s', Path: '%s'\n", v1Request.HTTPMethod, v1Request.Path)
 
-	return ginLambda.ProxyWithContext(ctx, req)
+	// Use gin-lambda adapter with converted request
+	v1Response, err := ginLambda.ProxyWithContext(ctx, v1Request)
+	if err != nil {
+		return events.APIGatewayV2HTTPResponse{
+			StatusCode: 500,
+			Body:       `{"error": "Internal server error"}`,
+		}, err
+	}
+
+	// Convert v1 response to v2 format
+	v2Response := events.APIGatewayV2HTTPResponse{
+		StatusCode:      v1Response.StatusCode,
+		Headers:         v1Response.Headers,
+		Body:            v1Response.Body,
+		IsBase64Encoded: v1Response.IsBase64Encoded,
+	}
+
+	return v2Response, nil
 }
 
 func main() {
