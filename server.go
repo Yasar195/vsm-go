@@ -1,38 +1,59 @@
 package main
 
 import (
+	"context"
 	"net/http"
+	"os"
 	"visitor-management-system/db"
 	authenticationcontroller "visitor-management-system/iam/authentication/controller"
 	usermanagementcontroller "visitor-management-system/iam/usermanagement/controller"
 	middlewares "visitor-management-system/middlewares"
+	visitormanagementcontrollers "visitor-management-system/visitormanagement/controller"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
-func main() {
+var ginLambda *ginadapter.GinLambda
+
+func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		panic("Error loading env files")
 	}
-
 	db.ConnectDatabase()
+	gin.SetMode(gin.ReleaseMode)
 
+	router := setupRouter()
+
+	ginLambda = ginadapter.New(router)
+}
+
+func setupRouter() *gin.Engine {
 	router := gin.Default()
 
-	auth := router.Group("/auth")
+	auth := router.Group("/api/auth")
 	{
 		auth.POST("/login", authenticationcontroller.Login)
 		auth.POST("/refresh", middlewares.AuthMiddleware(), authenticationcontroller.TokenRefresh)
 	}
 
-	user := router.Group("/users")
+	user := router.Group("/api/users")
 	user.Use(middlewares.AuthMiddleware())
 	{
 		user.GET("/", usermanagementcontroller.GetUsers)
 	}
 
+	visitor := router.Group("/api/visitors")
+	visitor.Use(middlewares.AuthMiddleware())
+	{
+		visitor.POST("/", visitormanagementcontrollers.CreateVisitor)
+	}
+
+	// Handle 404
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"success":    false,
@@ -43,6 +64,27 @@ func main() {
 		})
 	})
 
-	router.Run()
+	return router
+}
 
+// Lambda handler function
+func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	return ginLambda.ProxyWithContext(ctx, req)
+}
+
+func main() {
+	// Check if running in Lambda environment
+	if isLambda() {
+		lambda.Start(Handler)
+	} else {
+		// For local development
+		router := setupRouter()
+		router.Run()
+	}
+}
+
+// Helper function to detect if running in Lambda
+func isLambda() bool {
+	// Lambda sets this environment variable
+	return len(os.Getenv("AWS_LAMBDA_FUNCTION_NAME")) > 0
 }
