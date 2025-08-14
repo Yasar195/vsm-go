@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -o main .
 
 # Runtime stage
-FROM public.ecr.aws/lambda/go:1.22
+FROM public.ecr.aws/lambda/go:1.21
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main ${LAMBDA_TASK_ROOT}/
