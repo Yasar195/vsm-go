@@ -20,9 +20,10 @@ import (
 var ginLambda *ginadapter.GinLambda
 
 func init() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		panic("Error loading env files")
+	if !isLambda() {
+		if err := godotenv.Load(".env"); err != nil {
+			panic("Error loading env files")
+		}
 	}
 	db.ConnectDatabase()
 	gin.SetMode(gin.ReleaseMode)
