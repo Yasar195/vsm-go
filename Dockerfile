@@ -1,23 +1,37 @@
-# Use the official AWS Lambda Go base image
-FROM public.ecr.aws/lambda/go:1.24
+# Multi-stage build for optimized Lambda container
 
-# Set the working directory
-WORKDIR ${LAMBDA_TASK_ROOT}
+# Build stage
+FROM golang:1.22-alpine AS builder
 
-# Copy go.mod and go.sum files
+# Set working directory
+WORKDIR /app
+
+# Install git (needed for some Go modules)
+RUN apk add --no-cache git
+
+# Copy go.mod and go.sum
 COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy the source code
+# Copy source code
 COPY . .
 
-# Build the Go application
-RUN go build -tags lambda.norpc -o main .
+# Build the application with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -tags lambda.norpc \
+    -ldflags="-w -s" \
+    -o main .
 
-# Copy the built binary to the Lambda runtime directory
-RUN cp main ${LAMBDA_RUNTIME_DIR}
+# Runtime stage
+FROM public.ecr.aws/lambda/go:1.22
 
-# Set the CMD to your handler (the function name in your Go code)
+# Copy the binary from builder stage
+COPY --from=builder /app/main ${LAMBDA_TASK_ROOT}/
+
+# Copy any additional files if needed (like .env for local testing)
+# COPY .env ${LAMBDA_TASK_ROOT}/
+
+# Set the CMD to your handler
 CMD [ "main" ]
