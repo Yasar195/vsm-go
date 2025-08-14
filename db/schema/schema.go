@@ -16,3 +16,14 @@ type Users struct {
 	UserType   userType   `json:"user_type" gorm:"type:varchar(20);check:user_type IN ('staff');not null"`
 	UserStatus userStatus `json:"user_status" gorm:"type:varchar(20);check:user_status IN ('active','inactive');not null;default:'active'"`
 }
+
+type Visitor struct {
+	ID             uint       `json:"id"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+	DeletedAt      *time.Time `json:"deleted_at,omitempty"`
+	VisitorName    string     `json:"visitor_name" gorm:"not null"`
+	VisitorEmail   string     `json:"visitor_email" gorm:"type:varchar(100);uniqueIndex;"`
+	VisitorPhone   string     `json:"visitor_phone" gorm:"type:varchar(15);uniqueIndex;not null"`
+	VisitorAddress string     `json:"visitor_address" gorm:"type:varchar(255)"`
+}

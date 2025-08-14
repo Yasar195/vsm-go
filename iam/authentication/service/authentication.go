@@ -12,18 +12,18 @@ import (
 )
 
 type Tokens struct {
-	AccessToken  string
-	RefreshToken string
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 type LoginResponse struct {
-	Tokens   Tokens
-	UserName string
-	Email    string
+	Tokens   Tokens `json:"tokens"`
+	UserName string `json:"userName"`
+	Email    string `json:"email"`
 }
 
 type RefreshTokenResponse struct {
-	AccessToken string
+	AccessToken string `json:"accessToken"`
 }
 
 func Login(email string, password string) utility.Response[LoginResponse] {
@@ -99,7 +99,7 @@ func Login(email string, password string) utility.Response[LoginResponse] {
 	}
 }
 
-func RefreshToken(refreshToken string) utility.Response[RefreshTokenResponse] {
+func RefreshToken(refreshToken string, userId int64) utility.Response[RefreshTokenResponse] {
 	var refreshSecret = []byte(os.Getenv("JWT_REFRESH_SECRET"))
 	parsedToken, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -153,6 +153,16 @@ func RefreshToken(refreshToken string) utility.Response[RefreshTokenResponse] {
 
 	email, ok := claims["email"].(string)
 	userID, ok := claims["user_id"]
+
+	if userID == userId {
+		return utility.Response[RefreshTokenResponse]{
+			Success:    false,
+			Message:    "Token refresh failed",
+			Error:      "user mismatch",
+			StatusCode: 500,
+			Data:       nil,
+		}
+	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
