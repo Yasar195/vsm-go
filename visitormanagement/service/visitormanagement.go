@@ -18,6 +18,17 @@ type CreateVisitoryResponse struct {
 	Message string `json:"message"`
 }
 
+type GetVisitorsResponse struct {
+	Visitors []schema.Visitor `json:"visitors"`
+	Count    int64            `json:"count"`
+}
+
+type GetUserRequest struct {
+	PageSize int64
+	Page     int64
+	Search   string
+}
+
 func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryResponse] {
 	var visitor = schema.Visitor{
 		VisitorName:    data.VisitorName,
@@ -44,6 +55,46 @@ func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryRes
 			Message: "Visitor created successfully",
 		},
 		Message:    "Visitor creation success",
+		StatusCode: http.StatusOK,
+	}
+}
+
+func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
+
+	offset := (data.Page - 1) * data.PageSize
+	var visitors []schema.Visitor
+	var count int64
+
+	err := db.DB.Model(&schema.Visitor{}).Where("visitor_name ILIKE ?", "%"+data.Search+"%").Offset(int(offset)).Limit(int(data.PageSize)).Find(&visitors).Error
+	if err != nil {
+		return utility.Response[GetVisitorsResponse]{
+			Success:    false,
+			Message:    "Failed to fetch visitors",
+			Data:       nil,
+			Error:      err.Error(),
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
+
+	cerr := db.DB.Model(&schema.Visitor{}).Where("visitor_name ILIKE ?", "%"+data.Search+"%").Count(&count).Error
+
+	if cerr != nil {
+		return utility.Response[GetVisitorsResponse]{
+			Success:    false,
+			Message:    "Failed to fetch visitors",
+			Data:       nil,
+			Error:      err.Error(),
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
+
+	return utility.Response[GetVisitorsResponse]{
+		Success: true,
+		Data: &GetVisitorsResponse{
+			Visitors: visitors,
+			Count:    count,
+		},
+		Message:    "Visitors fetched successfully",
 		StatusCode: http.StatusOK,
 	}
 }

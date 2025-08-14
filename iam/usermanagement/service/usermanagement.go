@@ -1,6 +1,7 @@
 package usermanagementservice
 
 import (
+	"net/http"
 	"visitor-management-system/db"
 	"visitor-management-system/db/schema"
 	"visitor-management-system/utility"
@@ -31,7 +32,7 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 			Success:    false,
 			Message:    "failed to fetch users",
 			Error:      err.Error(),
-			StatusCode: 500,
+			StatusCode: http.StatusInternalServerError,
 			Data:       nil,
 		}
 	}
@@ -43,7 +44,7 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 			Success:    false,
 			Message:    "failed to fetch users",
 			Error:      err.Error(),
-			StatusCode: 500,
+			StatusCode: http.StatusInternalServerError,
 			Data:       nil,
 		}
 	}
@@ -51,7 +52,7 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 	return utility.Response[GetUserResponse]{
 		Success:    true,
 		Message:    "users fetched successfully",
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Data: &GetUserResponse{
 			Users: users,
 			Count: count,

@@ -1,6 +1,7 @@
 package visitormanagementcontrollers
 
 import (
+	"strconv"
 	visitormanagementservice "visitor-management-system/visitormanagement/service"
 
 	"github.com/gin-gonic/gin"
@@ -34,5 +35,28 @@ func CreateVisitor(c *gin.Context) {
 	}
 
 	resp := visitormanagementservice.CreateVisitor(body)
+	c.JSON(resp.StatusCode, resp)
+}
+
+func GetVisitors(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("pageSize", "10")
+	search := c.DefaultQuery("search", "")
+
+	page, err := strconv.ParseInt(pageStr, 10, 64)
+	if err != nil {
+		page = 1
+	}
+
+	pageSize, err := strconv.ParseInt(pageSizeStr, 10, 64)
+	if err != nil {
+		pageSize = 10
+	}
+
+	resp := visitormanagementservice.GetVisitors(visitormanagementservice.GetUserRequest{
+		PageSize: pageSize,
+		Page:     page,
+		Search:   search,
+	})
 	c.JSON(resp.StatusCode, resp)
 }

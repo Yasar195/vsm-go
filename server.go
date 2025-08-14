@@ -52,6 +52,7 @@ func setupRouter() *gin.Engine {
 	visitor.Use(middlewares.AuthMiddleware())
 	{
 		visitor.POST("/", visitormanagementcontrollers.CreateVisitor)
+		visitor.GET("/", visitormanagementcontrollers.GetVisitors)
 	}
 
 	// Handle 404
