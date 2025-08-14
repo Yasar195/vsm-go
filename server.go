@@ -98,9 +98,19 @@ func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 		}, err
 	}
 
+	headers := v1Response.Headers
+	if headers == nil {
+		headers = make(map[string]string)
+	}
+
+	// Ensure Content-Type is set for JSON responses
+	if _, exists := headers["Content-Type"]; !exists {
+		headers["Content-Type"] = "application/json"
+	}
+
 	v2Response := events.APIGatewayV2HTTPResponse{
 		StatusCode:      v1Response.StatusCode,
-		Headers:         v1Response.Headers,
+		Headers:         headers,
 		Body:            v1Response.Body,
 		IsBase64Encoded: v1Response.IsBase64Encoded,
 	}
