@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"visitor-management-system/db"
@@ -70,11 +69,6 @@ func setupRouter() *gin.Engine {
 }
 
 func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	// Debug logging
-	fmt.Printf("HTTP API v2 Request - Method: '%s', RawPath: '%s'\n", req.RequestContext.HTTP.Method, req.RawPath)
-	fmt.Printf("RouteKey: '%s'\n", req.RouteKey)
-
-	// Convert HTTP API v2 request to v1 format that gin-lambda-adapter expects
 	v1Request := events.APIGatewayProxyRequest{
 		HTTPMethod:      req.RequestContext.HTTP.Method,
 		Path:            req.RawPath,
@@ -88,19 +82,14 @@ func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 		},
 	}
 
-	// Handle path parameters
 	if req.PathParameters != nil {
 		v1Request.PathParameters = req.PathParameters
 	}
 
-	// Handle query string parameters
 	if req.QueryStringParameters != nil {
 		v1Request.QueryStringParameters = req.QueryStringParameters
 	}
 
-	fmt.Printf("Converted - Method: '%s', Path: '%s'\n", v1Request.HTTPMethod, v1Request.Path)
-
-	// Use gin-lambda adapter with converted request
 	v1Response, err := ginLambda.ProxyWithContext(ctx, v1Request)
 	if err != nil {
 		return events.APIGatewayV2HTTPResponse{
@@ -109,7 +98,6 @@ func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 		}, err
 	}
 
-	// Convert v1 response to v2 format
 	v2Response := events.APIGatewayV2HTTPResponse{
 		StatusCode:      v1Response.StatusCode,
 		Headers:         v1Response.Headers,
