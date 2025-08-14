@@ -1,17 +1,23 @@
-FROM golang:1.24-alpine AS builder
-ENV CGO_ENABLED=0 GOOS=linux
-# Remove GOARCH=amd64 - let buildx handle it automatically
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN go build -o main .
+# Use the official AWS Lambda Go base image
+FROM public.ecr.aws/lambda/go:1.24
 
-FROM alpine:latest
-RUN adduser -D appuser
-WORKDIR /app
-COPY --from=builder /app/main .
-RUN chown appuser:appuser /app/main
-USER appuser
-EXPOSE 8080
-CMD ["./main"]
+# Set the working directory
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+# Copy go.mod and go.sum files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy the source code
+COPY . .
+
+# Build the Go application
+RUN go build -tags lambda.norpc -o main .
+
+# Copy the built binary to the Lambda runtime directory
+RUN cp main ${LAMBDA_RUNTIME_DIR}
+
+# Set the CMD to your handler (the function name in your Go code)
+CMD [ "main" ]
