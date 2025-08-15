@@ -25,7 +25,7 @@ func init() {
 			panic("Error loading env files")
 		}
 	}
-	go db.ConnectDatabase()
+	db.ConnectDatabase()
 	gin.SetMode(gin.ReleaseMode)
 
 	router := setupRouter()
