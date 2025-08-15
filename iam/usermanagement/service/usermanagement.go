@@ -2,6 +2,7 @@ package usermanagementservice
 
 import (
 	"net/http"
+	"sync"
 	"visitor-management-system/db"
 	"visitor-management-system/db/schema"
 	"visitor-management-system/utility"
@@ -20,30 +21,50 @@ type GetUserResponse struct {
 }
 
 func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
-
 	offset := (data.Page - 1) * data.PageSize
+
 	var users []schema.Users
 	var count int64
+	var userErr, countErr error
+	var wg sync.WaitGroup
 
-	err := db.DB.Model(&schema.Users{}).Where("id != ?", data.UserId).Where("username ILIKE ?", "%"+data.Search+"%").Offset(int(offset)).Limit(int(data.PageSize)).Find(&users).Error
+	wg.Add(2)
 
-	if err != nil {
+	go func() {
+		defer wg.Done()
+		userErr = db.DB.Model(&schema.Users{}).
+			Where("id != ?", data.UserId).
+			Where("username ILIKE ?", "%"+data.Search+"%").
+			Offset(int(offset)).
+			Limit(int(data.PageSize)).
+			Find(&users).Error
+	}()
+
+	go func() {
+		defer wg.Done()
+		countErr = db.DB.Model(&schema.Users{}).
+			Where("id != ?", data.UserId).
+			Where("username ILIKE ?", "%"+data.Search+"%").
+			Count(&count).Error
+	}()
+
+	wg.Wait()
+
+	if userErr != nil {
 		return utility.Response[GetUserResponse]{
 			Success:    false,
 			Message:    "failed to fetch users",
-			Error:      err.Error(),
+			Error:      userErr.Error(),
 			StatusCode: http.StatusInternalServerError,
 			Data:       nil,
 		}
 	}
 
-	cerr := db.DB.Model(&schema.Users{}).Where("id != ?", data.UserId).Where("username ILIKE ?", "%"+data.Search+"%").Count(&count).Error
-
-	if cerr != nil {
+	if countErr != nil {
 		return utility.Response[GetUserResponse]{
 			Success:    false,
-			Message:    "failed to fetch users",
-			Error:      err.Error(),
+			Message:    "failed to fetch user count",
+			Error:      countErr.Error(),
 			StatusCode: http.StatusInternalServerError,
 			Data:       nil,
 		}
@@ -58,5 +79,4 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 			Count: count,
 		},
 	}
-
 }

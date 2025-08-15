@@ -25,7 +25,7 @@ func init() {
 			panic("Error loading env files")
 		}
 	}
-	db.ConnectDatabase()
+	go db.ConnectDatabase()
 	gin.SetMode(gin.ReleaseMode)
 
 	router := setupRouter()
@@ -55,7 +55,6 @@ func setupRouter() *gin.Engine {
 		visitor.GET("/", visitormanagementcontrollers.GetVisitors)
 	}
 
-	// Handle 404
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"success":    false,
@@ -120,18 +119,14 @@ func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 }
 
 func main() {
-	// Check if running in Lambda environment
 	if isLambda() {
 		lambda.Start(Handler)
 	} else {
-		// For local development
 		router := setupRouter()
 		router.Run()
 	}
 }
 
-// Helper function to detect if running in Lambda
 func isLambda() bool {
-	// Lambda sets this environment variable
 	return len(os.Getenv("AWS_LAMBDA_FUNCTION_NAME")) > 0
 }

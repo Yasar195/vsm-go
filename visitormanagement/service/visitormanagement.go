@@ -2,6 +2,7 @@ package visitormanagementservice
 
 import (
 	"net/http"
+	"sync"
 	"visitor-management-system/db"
 	"visitor-management-system/db/schema"
 	"visitor-management-system/utility"
@@ -64,8 +65,23 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 	offset := (data.Page - 1) * data.PageSize
 	var visitors []schema.Visitor
 	var count int64
+	var err, cerr error
+	var wg sync.WaitGroup
 
-	err := db.DB.Model(&schema.Visitor{}).Where("visitor_name ILIKE ?", "%"+data.Search+"%").Offset(int(offset)).Limit(int(data.PageSize)).Find(&visitors).Error
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		err = db.DB.Model(&schema.Visitor{}).Where("visitor_name ILIKE ?", "%"+data.Search+"%").Offset(int(offset)).Limit(int(data.PageSize)).Find(&visitors).Error
+	}()
+
+	go func() {
+		defer wg.Done()
+		cerr = db.DB.Model(&schema.Visitor{}).Where("visitor_name ILIKE ?", "%"+data.Search+"%").Count(&count).Error
+	}()
+
+	wg.Wait()
+
 	if err != nil {
 		return utility.Response[GetVisitorsResponse]{
 			Success:    false,
@@ -75,8 +91,6 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 			StatusCode: http.StatusInternalServerError,
 		}
 	}
-
-	cerr := db.DB.Model(&schema.Visitor{}).Where("visitor_name ILIKE ?", "%"+data.Search+"%").Count(&count).Error
 
 	if cerr != nil {
 		return utility.Response[GetVisitorsResponse]{
