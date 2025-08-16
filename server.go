@@ -17,7 +17,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var ginLambda *ginadapter.GinLambda
+var ginLambda *ginadapter.GinLambdaV2
 
 func init() {
 	if !isLambda() {
@@ -30,7 +30,7 @@ func init() {
 
 	router := setupRouter()
 
-	ginLambda = ginadapter.New(router)
+	ginLambda = ginadapter.NewV2(router)
 }
 
 func setupRouter() *gin.Engine {
@@ -69,53 +69,7 @@ func setupRouter() *gin.Engine {
 }
 
 func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	v1Request := events.APIGatewayProxyRequest{
-		HTTPMethod:      req.RequestContext.HTTP.Method,
-		Path:            req.RawPath,
-		Resource:        req.RouteKey,
-		Headers:         req.Headers,
-		Body:            req.Body,
-		IsBase64Encoded: req.IsBase64Encoded,
-		RequestContext: events.APIGatewayProxyRequestContext{
-			HTTPMethod: req.RequestContext.HTTP.Method,
-			Path:       req.RawPath,
-		},
-	}
-
-	if req.PathParameters != nil {
-		v1Request.PathParameters = req.PathParameters
-	}
-
-	if req.QueryStringParameters != nil {
-		v1Request.QueryStringParameters = req.QueryStringParameters
-	}
-
-	v1Response, err := ginLambda.ProxyWithContext(ctx, v1Request)
-	if err != nil {
-		return events.APIGatewayV2HTTPResponse{
-			StatusCode: 500,
-			Body:       `{"error": "Internal server error"}`,
-		}, err
-	}
-
-	headers := v1Response.Headers
-	if headers == nil {
-		headers = make(map[string]string)
-	}
-
-	// Ensure Content-Type is set for JSON responses
-	if _, exists := headers["Content-Type"]; !exists {
-		headers["Content-Type"] = "application/json"
-	}
-
-	v2Response := events.APIGatewayV2HTTPResponse{
-		StatusCode:      v1Response.StatusCode,
-		Headers:         headers,
-		Body:            v1Response.Body,
-		IsBase64Encoded: v1Response.IsBase64Encoded,
-	}
-
-	return v2Response, nil
+	return ginLambda.ProxyWithContext(ctx, req)
 }
 
 func main() {
