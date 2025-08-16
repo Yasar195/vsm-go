@@ -36,8 +36,9 @@ type GetUserRequest struct {
 }
 
 type CreateVisitsInput struct {
-	UserId    int64 `json:"userId" validate:"required"`
-	VisitorId int64 `json:"visitorId" validate:"required"`
+	UserId       int64  `json:"userId" validate:"required"`
+	VisitorId    int64  `json:"visitorId" validate:"required"`
+	VisitPurpose string `json:"visitPurpose"`
 }
 
 func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryResponse] {
@@ -125,8 +126,9 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 
 func CreateVisits(data CreateVisitsInput) utility.Response[CreateVisitoryResponse] {
 	var visit = schema.Visits{
-		UserID:    uint(data.UserId),
-		VisitorID: uint(data.VisitorId),
+		UserID:       uint(data.UserId),
+		VisitorID:    uint(data.VisitorId),
+		VisitPurpose: data.VisitPurpose,
 	}
 
 	err := db.DB.Create(&visit).Error
