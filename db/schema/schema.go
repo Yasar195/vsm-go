@@ -31,12 +31,13 @@ type Visitor struct {
 }
 
 type Visits struct {
-	ID          uint          `json:"id" gorm:"column:id"`
-	CreatedAt   time.Time     `json:"createdAt" gorm:"column:created_at"`
-	UpdatedAt   time.Time     `json:"updatedAt" gorm:"column:updated_at"`
-	UserID      uint          `json:"userId" gorm:"column:user_id;not null"`
-	VisitorID   uint          `json:"visitorId" gorm:"column:visitor_id;not null"`
-	User        Users         `json:"user" gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Visitor     Visitor       `json:"visitor" gorm:"foreignKey:VisitorID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	VisitStatus VisitorStatus `json:"visitStatus" gorm:"column:visit_status;type:varchar(20);check:visit_status IN ('waiting', 'meeting', 'canceled', 'completed');not null;default:'waiting'"`
+	ID           uint          `json:"id" gorm:"column:id"`
+	CreatedAt    time.Time     `json:"createdAt" gorm:"column:created_at"`
+	UpdatedAt    time.Time     `json:"updatedAt" gorm:"column:updated_at"`
+	UserID       uint          `json:"userId" gorm:"column:user_id;not null"`
+	VisitorID    uint          `json:"visitorId" gorm:"column:visitor_id;not null"`
+	User         Users         `json:"user" gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Visitor      Visitor       `json:"visitor" gorm:"foreignKey:VisitorID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	VisitStatus  VisitorStatus `json:"visitStatus" gorm:"column:visit_status;type:varchar(20);check:visit_status IN ('waiting', 'meeting', 'canceled', 'completed');not null;default:'waiting'"`
+	VisitPurpose string        `json:"visitPurpose" gorm:"column:visit_purpose;type:varchar(255)"`
 }
