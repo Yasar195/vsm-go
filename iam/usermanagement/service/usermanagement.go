@@ -1,7 +1,9 @@
 package usermanagementservice
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"visitor-management-system/db"
 	"visitor-management-system/db/schema"
@@ -23,8 +25,8 @@ type GetUserResponse struct {
 type CreateUserInput struct {
 	Username  string          `json:"userName" validate:"required"`
 	UserEmail string          `json:"userEmail" validate:"required,email"`
-	Password  string          `json:"password" validate:"required,min=8"`
-	UserType  schema.UserType `json:"userType" validate:"required,oneof=staff,host"`
+	Password  string          `json:"password"`
+	UserType  schema.UserType `json:"userType" validate:"required,oneof=staff host"`
 }
 
 type CreateUserResponse struct {
@@ -45,7 +47,7 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 		defer wg.Done()
 		userErr = db.DB.Model(&schema.Users{}).
 			Where("id != ?", data.UserId).
-			Where("username ILIKE ?", "%"+data.Search+"%").
+			Where("user_name ILIKE ?", "%"+data.Search+"%").
 			Offset(int(offset)).
 			Limit(int(data.PageSize)).
 			Find(&users).Error
@@ -55,7 +57,7 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 		defer wg.Done()
 		countErr = db.DB.Model(&schema.Users{}).
 			Where("id != ?", data.UserId).
-			Where("username ILIKE ?", "%"+data.Search+"%").
+			Where("user_name ILIKE ?", "%"+data.Search+"%").
 			Count(&count).Error
 	}()
 
@@ -98,6 +100,48 @@ func CreateUser(data CreateUserInput) utility.Response[CreateUserResponse] {
 		Username:  data.Username,
 		UserEmail: data.UserEmail,
 		UserType:  data.UserType,
+	}
+
+	if data.UserType == "staff" {
+		if data.Password == "" {
+			return utility.Response[CreateUserResponse]{
+				Success:    false,
+				Message:    "failed to create user",
+				Error:      "staff user requires password",
+				Data:       nil,
+				StatusCode: http.StatusBadRequest,
+			}
+		}
+
+		hash, err := utility.HashPassword(data.Password)
+
+		if err != nil {
+			return utility.Response[CreateUserResponse]{
+				Success:    false,
+				Message:    "failed to create user",
+				Error:      "passoword hash faile",
+				Data:       nil,
+				StatusCode: http.StatusInternalServerError,
+			}
+		}
+
+		user.Password = hash
+
+		emailConfig := utility.EmailConfig{
+			SMTPHost:     os.Getenv("SMTP_HOST"),
+			SMTPPort:     587,
+			SMTPUsername: os.Getenv("ADMIN_EMAIL"),
+			SMTPPassword: os.Getenv("ADMIN_PASSWORD"),
+			FromEmail:    os.Getenv("ADMIN_EMAIL"),
+		}
+
+		emailService := utility.NewEmailService(emailConfig)
+
+		emailerr := emailService.SendEmail(os.Getenv("ADMIN_EMAIL"), "admin created", fmt.Sprintf("Hi\nNew admin create\n\nemail: %s\npassword: %s", user.UserEmail, user.Password))
+		if emailerr != nil {
+			panic("error sending email")
+		}
+
 	}
 
 	if err := db.DB.Create(&user).Error; err != nil {

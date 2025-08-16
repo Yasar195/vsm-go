@@ -2,6 +2,7 @@ package authenticationservice
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 	"visitor-management-system/db"
@@ -34,7 +35,7 @@ func Login(email string, password string) utility.Response[LoginResponse] {
 			Success:    false,
 			Message:    "Login failed",
 			Error:      err.Error(),
-			StatusCode: 401,
+			StatusCode: http.StatusUnauthorized,
 			Data:       nil,
 		}
 	}
@@ -44,7 +45,7 @@ func Login(email string, password string) utility.Response[LoginResponse] {
 			Success:    false,
 			Message:    "Login failed",
 			Error:      "password mismatch",
-			StatusCode: 401,
+			StatusCode: http.StatusUnauthorized,
 			Data:       nil,
 		}
 	}
@@ -71,7 +72,7 @@ func Login(email string, password string) utility.Response[LoginResponse] {
 			Success:    false,
 			Message:    "Login failed",
 			Error:      err.Error(),
-			StatusCode: 500,
+			StatusCode: http.StatusInternalServerError,
 			Data:       nil,
 		}
 	}
@@ -95,7 +96,7 @@ func Login(email string, password string) utility.Response[LoginResponse] {
 			Email:    user.UserEmail,
 		},
 		Message:    "Login successful",
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 	}
 }
 
@@ -114,7 +115,7 @@ func RefreshToken(refreshToken string, userId int64) utility.Response[RefreshTok
 			Message:    "Token refresh failed",
 			Error:      err.Error(),
 			Data:       nil,
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 		}
 	}
 
@@ -124,7 +125,7 @@ func RefreshToken(refreshToken string, userId int64) utility.Response[RefreshTok
 			Message:    "Token refresh failed",
 			Data:       nil,
 			Error:      "Invalid refresh token",
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 		}
 	}
 
@@ -135,7 +136,7 @@ func RefreshToken(refreshToken string, userId int64) utility.Response[RefreshTok
 			Message:    "Token refresh failed",
 			Data:       nil,
 			Error:      "Invalid token claims",
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 		}
 	}
 
@@ -146,7 +147,7 @@ func RefreshToken(refreshToken string, userId int64) utility.Response[RefreshTok
 				Message:    "Token refresh failed",
 				Data:       nil,
 				Error:      "refresh token expired",
-				StatusCode: 401,
+				StatusCode: http.StatusBadRequest,
 			}
 		}
 	}
@@ -159,7 +160,7 @@ func RefreshToken(refreshToken string, userId int64) utility.Response[RefreshTok
 			Success:    false,
 			Message:    "Token refresh failed",
 			Error:      "user mismatch",
-			StatusCode: 500,
+			StatusCode: http.StatusInternalServerError,
 			Data:       nil,
 		}
 	}
@@ -177,7 +178,7 @@ func RefreshToken(refreshToken string, userId int64) utility.Response[RefreshTok
 			Success:    false,
 			Message:    "Token refresh failed",
 			Error:      err.Error(),
-			StatusCode: 500,
+			StatusCode: http.StatusInternalServerError,
 			Data:       nil,
 		}
 	}

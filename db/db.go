@@ -59,9 +59,7 @@ func ConnectDatabase() {
 			emailService := utility.NewEmailService(emailConfig)
 
 			err := emailService.SendEmail(os.Getenv("ADMIN_EMAIL"), "admin created", "Hi\nNew admin create\n\nemail: imyasar07@gmail.com\npassword: admin@123")
-			fmt.Println(os.Getenv("ADMIN_EMAIL"), os.Getenv("ADMIN_PASSWORD"))
 			if err != nil {
-				fmt.Println(err)
 				panic("error sending email")
 			}
 
