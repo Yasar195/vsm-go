@@ -21,10 +21,14 @@ type GetUserResponse struct {
 }
 
 type CreateUserInput struct {
-	Username  string `json:"userName" validate:"required"`
-	UserEmail string `json:"userEmail" validate:"required,email"`
-	Password  string `json:"password" validate:"required,min=8"`
-	UserType  string `json:"userType" validate:"required,oneof=staff,host"`
+	Username  string          `json:"userName" validate:"required"`
+	UserEmail string          `json:"userEmail" validate:"required,email"`
+	Password  string          `json:"password" validate:"required,min=8"`
+	UserType  schema.UserType `json:"userType" validate:"required,oneof=staff,host"`
+}
+
+type CreateUserResponse struct {
+	Message string `json:"message"`
 }
 
 func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
@@ -88,21 +92,30 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 	}
 }
 
-// func CreateUser(data schema.Users) utility.Response[schema.Users] {
-// 	if err := db.DB.Create(&data).Error; err != nil {
-// 		return utility.Response[schema.Users]{
-// 			Success:    false,
-// 			Message:    "failed to create user",
-// 			Error:      err.Error(),
-// 			StatusCode: http.StatusInternalServerError,
-// 			Data:       schema.Users{},
-// 		}
-// 	}
+func CreateUser(data CreateUserInput) utility.Response[CreateUserResponse] {
 
-// 	return utility.Response[schema.Users]{
-// 		Success:    true,
-// 		Message:    "user created successfully",
-// 		StatusCode: http.StatusCreated,
-// 		Data:       data,
-// 	}
-// }
+	var user = schema.Users{
+		Username:  data.Username,
+		UserEmail: data.UserEmail,
+		UserType:  data.UserType,
+	}
+
+	if err := db.DB.Create(&user).Error; err != nil {
+		return utility.Response[CreateUserResponse]{
+			Success:    false,
+			Message:    "failed to create user",
+			Error:      err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		}
+	}
+
+	return utility.Response[CreateUserResponse]{
+		Success:    true,
+		Message:    "user created successfully",
+		StatusCode: http.StatusCreated,
+		Data: &CreateUserResponse{
+			Message: "User created successfully",
+		},
+	}
+}

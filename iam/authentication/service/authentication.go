@@ -29,7 +29,7 @@ type RefreshTokenResponse struct {
 func Login(email string, password string) utility.Response[LoginResponse] {
 	var user schema.Users
 
-	if err := db.DB.Where("user_email = ? AND user_status = ?", email, "active").First(&user).Error; err != nil {
+	if err := db.DB.Where("user_email = ? AND user_status = ? AND user_type = ?", email, "active", "staff").First(&user).Error; err != nil {
 		return utility.Response[LoginResponse]{
 			Success:    false,
 			Message:    "Login failed",

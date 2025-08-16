@@ -43,7 +43,7 @@ func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryRes
 	if err != nil {
 		return utility.Response[CreateVisitoryResponse]{
 			Success:    false,
-			Message:    "Failed to create visitor",
+			Message:    "User creation failed",
 			Data:       nil,
 			Error:      err.Error(),
 			StatusCode: http.StatusInternalServerError,

@@ -46,6 +46,7 @@ func setupRouter() *gin.Engine {
 	user.Use(middlewares.AuthMiddleware())
 	{
 		user.GET("/", usermanagementcontroller.GetUsers)
+		user.POST("/", usermanagementcontroller.CreateUser)
 	}
 
 	visitor := router.Group("/api/visitors")

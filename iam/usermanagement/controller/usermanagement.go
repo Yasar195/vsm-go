@@ -5,6 +5,7 @@ import (
 	usermanagementservice "visitor-management-system/iam/usermanagement/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -32,5 +33,35 @@ func GetUsers(c *gin.Context) {
 		Search:   search,
 	})
 
+	c.JSON(resp.StatusCode, resp)
+}
+
+var validate = validator.New()
+
+func CreateUser(c *gin.Context) {
+	var body usermanagementservice.CreateUserInput
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(400, gin.H{
+			"success":    false,
+			"message":    "User creation failed",
+			"error":      err.Error(),
+			"data":       nil,
+			"statusCode": 400,
+		})
+		return
+	}
+
+	if err := validate.Struct(&body); err != nil {
+		c.JSON(400, gin.H{
+			"success":    false,
+			"message":    "Validation failed",
+			"error":      err.Error(),
+			"data":       nil,
+			"statusCode": 400,
+		})
+		return
+	}
+
+	resp := usermanagementservice.CreateUser(body)
 	c.JSON(resp.StatusCode, resp)
 }
