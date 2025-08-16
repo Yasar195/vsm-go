@@ -13,7 +13,7 @@ type Users struct {
 	Username   string     `json:"userName" gorm:"not null"`
 	UserEmail  string     `json:"userEmail" gorm:"type:varchar(100);uniqueIndex;not null"`
 	Password   string     `json:"-"` // hide from JSON responses
-	UserType   userType   `json:"userType" gorm:"type:varchar(20);check:user_type IN ('staff');not null"`
+	UserType   userType   `json:"userType" gorm:"type:varchar(20);check:user_type IN ('staff', 'host');not null"`
 	UserStatus userStatus `json:"userStatus" gorm:"type:varchar(20);check:user_status IN ('active','inactive');not null;default:'active'"`
 }
 
@@ -26,4 +26,5 @@ type Visitor struct {
 	VisitorEmail   string     `json:"visitorEmail" gorm:"type:varchar(100);uniqueIndex;"`
 	VisitorPhone   string     `json:"visitorPhone" gorm:"type:varchar(15);uniqueIndex;not null"`
 	VisitorAddress string     `json:"visitorAddress" gorm:"type:varchar(255)"`
+	IsVerified     bool       `json:"isVerified" gorm:"default:false"`
 }
