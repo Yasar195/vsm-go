@@ -56,6 +56,13 @@ func setupRouter() *gin.Engine {
 		visitor.GET("/", visitormanagementcontrollers.GetVisitors)
 	}
 
+	visits := router.Group("/api/visits")
+	visits.Use(middlewares.AuthMiddleware())
+	{
+		visits.POST("/", visitormanagementcontrollers.CreateVisits)
+		visits.GET("/", visitormanagementcontrollers.GetVisits)
+	}
+
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"success":    false,
