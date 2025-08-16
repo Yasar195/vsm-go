@@ -20,6 +20,13 @@ type GetUserResponse struct {
 	Count int64          `json:"count"`
 }
 
+type CreateUserInput struct {
+	Username  string `json:"userName" validate:"required"`
+	UserEmail string `json:"userEmail" validate:"required,email"`
+	Password  string `json:"password" validate:"required,min=8"`
+	UserType  string `json:"userType" validate:"required,oneof=staff,host"`
+}
+
 func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 	offset := (data.Page - 1) * data.PageSize
 
@@ -80,3 +87,22 @@ func GetUsers(data GetUserRequest) utility.Response[GetUserResponse] {
 		},
 	}
 }
+
+// func CreateUser(data schema.Users) utility.Response[schema.Users] {
+// 	if err := db.DB.Create(&data).Error; err != nil {
+// 		return utility.Response[schema.Users]{
+// 			Success:    false,
+// 			Message:    "failed to create user",
+// 			Error:      err.Error(),
+// 			StatusCode: http.StatusInternalServerError,
+// 			Data:       schema.Users{},
+// 		}
+// 	}
+
+// 	return utility.Response[schema.Users]{
+// 		Success:    true,
+// 		Message:    "user created successfully",
+// 		StatusCode: http.StatusCreated,
+// 		Data:       data,
+// 	}
+// }
