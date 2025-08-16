@@ -41,3 +41,13 @@ type Visits struct {
 	VisitStatus  VisitorStatus `json:"visitStatus" gorm:"column:visit_status;type:varchar(20);check:visit_status IN ('waiting', 'meeting', 'canceled', 'completed');not null;default:'waiting'"`
 	VisitPurpose string        `json:"visitPurpose" gorm:"column:visit_purpose;type:varchar(255)"`
 }
+
+type Notifications struct {
+	ID        uint      `json:"id" gorm:"column:id"`
+	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at"`
+	UserID    uint      `json:"userId" gorm:"column:user_id;not null"`
+	Title     string    `json:"title" gorm:"column:title;type:varchar(255);not null"`
+	Message   string    `json:"message" gorm:"column:message;type:varchar(255);not null"`
+	User      Users     `json:"user" gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	IsRead    bool      `json:"isRead" gorm:"column:is_read;default:false"`
+}

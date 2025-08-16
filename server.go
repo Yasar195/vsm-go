@@ -8,6 +8,7 @@ import (
 	authenticationcontroller "visitor-management-system/iam/authentication/controller"
 	usermanagementcontroller "visitor-management-system/iam/usermanagement/controller"
 	middlewares "visitor-management-system/middlewares"
+	notificationmanagementcontroller "visitor-management-system/notificationmanagement/controller"
 	visitormanagementcontrollers "visitor-management-system/visitormanagement/controller"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -61,6 +62,13 @@ func setupRouter() *gin.Engine {
 	{
 		visits.POST("/", visitormanagementcontrollers.CreateVisits)
 		visits.GET("/", visitormanagementcontrollers.GetVisits)
+	}
+
+	notifications := router.Group("/api/notifications")
+	notifications.Use(middlewares.AuthMiddleware())
+	{
+		notifications.GET("/", notificationmanagementcontroller.GetNotifications)
+		notifications.GET("/read", notificationmanagementcontroller.ReadNotifications)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {
