@@ -44,7 +44,6 @@ func NewEmailService(config EmailConfig) *EmailService {
 func (es *EmailService) SendEmail(to string, subject string, body string) error {
 	addr := fmt.Sprintf("%s:%d", es.config.SMTPHost, es.config.SMTPPort)
 
-	// For 465 → Implicit TLS
 	if es.config.SMTPPort == 465 {
 		tlsconfig := &tls.Config{
 			InsecureSkipVerify: false,
@@ -91,7 +90,6 @@ func (es *EmailService) SendEmail(to string, subject string, body string) error 
 		return nil
 	}
 
-	// For 587 → STARTTLS
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("failed to dial: %w", err)
@@ -102,7 +100,6 @@ func (es *EmailService) SendEmail(to string, subject string, body string) error 
 	}
 	defer c.Quit()
 
-	// Upgrade to TLS
 	tlsconfig := &tls.Config{ServerName: es.config.SMTPHost}
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		if err = c.StartTLS(tlsconfig); err != nil {

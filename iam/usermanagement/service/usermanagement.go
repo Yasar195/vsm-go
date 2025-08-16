@@ -127,28 +127,23 @@ func CreateUser(data CreateUserInput) utility.Response[CreateUserResponse] {
 
 		user.Password = hash
 
-		emailConfig := utility.EmailConfig{
-			SMTPHost:     os.Getenv("SMTP_HOST"),
-			SMTPPort:     587,
-			SMTPUsername: os.Getenv("ADMIN_EMAIL"),
-			SMTPPassword: os.Getenv("ADMIN_PASSWORD"),
-			FromEmail:    os.Getenv("ADMIN_EMAIL"),
-		}
-
-		emailService := utility.NewEmailService(emailConfig)
-
-		emailerr := emailService.SendEmail(os.Getenv("ADMIN_EMAIL"), "admin created", fmt.Sprintf("Hi\nNew admin create\n\nemail: %s\npassword: %s", user.UserEmail, data.Password))
-		if emailerr != nil {
-			fmt.Println("Email error", emailerr)
-			return utility.Response[CreateUserResponse]{
-				Success:    false,
-				Message:    "failed to create user",
-				Error:      emailerr.Error(),
-				StatusCode: http.StatusBadRequest,
-				Data:       nil,
+		go func() {
+			emailConfig := utility.EmailConfig{
+				SMTPHost:     os.Getenv("SMTP_HOST"),
+				SMTPPort:     587,
+				SMTPUsername: os.Getenv("ADMIN_EMAIL"),
+				SMTPPassword: os.Getenv("ADMIN_PASSWORD"),
+				FromEmail:    os.Getenv("ADMIN_EMAIL"),
 			}
-		}
 
+			emailService := utility.NewEmailService(emailConfig)
+
+			emailerr := emailService.SendEmail(os.Getenv("ADMIN_EMAIL"), "admin created", fmt.Sprintf("Hi\nNew admin create\n\nemail: %s\npassword: %s", user.UserEmail, data.Password))
+			if emailerr != nil {
+				fmt.Println("Email error", emailerr)
+			}
+
+		}()
 	}
 
 	if err := db.DB.Create(&user).Error; err != nil {
