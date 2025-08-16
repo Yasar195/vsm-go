@@ -32,11 +32,11 @@ func ConnectDatabase() {
 		// 	println("Warning: Could not drop Users table:", err.Error())
 		// }
 
-		err = db.AutoMigrate(&schema.Users{}, &schema.Visitor{}, &schema.Visits{}, &schema.Notifications{})
+		// err = db.AutoMigrate(&schema.Users{}, &schema.Visitor{}, &schema.Visits{}, &schema.Notifications{})
 
-		if err != nil {
-			panic("failed to migrate database schema")
-		}
+		// if err != nil {
+		// 	panic("failed to migrate database schema")
+		// }
 
 		go func() {
 			var count int64
