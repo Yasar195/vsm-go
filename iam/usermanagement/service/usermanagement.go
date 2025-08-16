@@ -139,6 +139,7 @@ func CreateUser(data CreateUserInput) utility.Response[CreateUserResponse] {
 
 		emailerr := emailService.SendEmail(os.Getenv("ADMIN_EMAIL"), "admin created", fmt.Sprintf("Hi\nNew admin create\n\nemail: %s\npassword: %s", user.UserEmail, user.Password))
 		if emailerr != nil {
+			fmt.Println("Email error", emailerr)
 			return utility.Response[CreateUserResponse]{
 				Success:    false,
 				Message:    "failed to create user",
