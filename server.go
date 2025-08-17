@@ -7,6 +7,7 @@ import (
 	"visitor-management-system/db"
 	authenticationcontroller "visitor-management-system/iam/authentication/controller"
 	usermanagementcontroller "visitor-management-system/iam/usermanagement/controller"
+	logmanagementcontroller "visitor-management-system/logmanagement/controller"
 	middlewares "visitor-management-system/middlewares"
 	notificationmanagementcontroller "visitor-management-system/notificationmanagement/controller"
 	visitormanagementcontrollers "visitor-management-system/visitormanagement/controller"
@@ -69,6 +70,12 @@ func setupRouter() *gin.Engine {
 	{
 		notifications.GET("/", notificationmanagementcontroller.GetNotifications)
 		notifications.GET("/read", notificationmanagementcontroller.ReadNotifications)
+	}
+
+	logs := router.Group("/api/logs")
+	logs.Use(middlewares.AuthMiddleware())
+	{
+		logs.GET("/", logmanagementcontroller.GetLogs)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {
