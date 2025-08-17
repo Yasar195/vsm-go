@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var validate = validator.New()
@@ -63,7 +64,10 @@ func GetVisitors(c *gin.Context) {
 }
 
 func CreateVisits(c *gin.Context) {
+	claims := c.MustGet("claims").(jwt.MapClaims)
+	userID := int64(claims["user_id"].(float64))
 	var body visitormanagementservice.CreateVisitsInput
+	body.UserId = userID
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(400, gin.H{
 			"success":    false,

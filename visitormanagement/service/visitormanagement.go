@@ -13,6 +13,7 @@ type CreateVisitorRequest struct {
 	VisitorEmail   string `json:"visitorEmail" validate:"required,email"`
 	VisitorPhone   string `json:"visitorPhone" validate:"required"`
 	VisitorAddress string `json:"visitorAddress" validate:"required"`
+	UserId         int64  `json:"userId"`
 }
 
 type CreateVisitoryResponse struct {
@@ -47,6 +48,7 @@ func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryRes
 		VisitorEmail:   data.VisitorEmail,
 		VisitorPhone:   data.VisitorPhone,
 		VisitorAddress: data.VisitorAddress,
+		CreatedUserID:  uint(data.UserId),
 	}
 
 	err := db.DB.Create(&visitor).Error
@@ -126,9 +128,10 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 
 func CreateVisits(data CreateVisitsInput) utility.Response[CreateVisitoryResponse] {
 	var visit = schema.Visits{
-		UserID:       uint(data.UserId),
-		VisitorID:    uint(data.VisitorId),
-		VisitPurpose: data.VisitPurpose,
+		UserID:        uint(data.UserId),
+		VisitorID:     uint(data.VisitorId),
+		VisitPurpose:  data.VisitPurpose,
+		CreatedUserID: uint(data.UserId),
 	}
 
 	err := db.DB.Create(&visit).Error
