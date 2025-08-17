@@ -27,12 +27,12 @@ func ConnectDatabase() {
 			panic("failed to connect database")
 		}
 
-		// err = db.Migrator().DropTable(&schema.Users{})
+		// err = db.Migrator().DropTable(&schema.Users{}, &schema.Visitor{}, &schema.Visits{}, &schema.Notifications{}, &schema.Logs{})
 		// if err != nil {
 		// 	println("Warning: Could not drop Users table:", err.Error())
 		// }
 
-		// err = db.AutoMigrate(&schema.Users{}, &schema.Visitor{}, &schema.Visits{}, &schema.Notifications{})
+		// err = db.AutoMigrate(&schema.Users{}, &schema.Visitor{}, &schema.Visits{}, &schema.Notifications{}, &schema.Logs{})
 
 		// if err != nil {
 		// 	panic("failed to migrate database schema")
