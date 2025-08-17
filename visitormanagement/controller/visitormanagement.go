@@ -13,7 +13,10 @@ import (
 var validate = validator.New()
 
 func CreateVisitor(c *gin.Context) {
+	claims := c.MustGet("claims").(jwt.MapClaims)
+	userID := int64(claims["user_id"].(float64))
 	var body visitormanagementservice.CreateVisitorRequest
+	body.UserId = userID
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(400, gin.H{
 			"success":    false,
