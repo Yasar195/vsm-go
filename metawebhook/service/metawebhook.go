@@ -13,17 +13,17 @@ type VerifyWebhookRequest struct {
 }
 
 type VerifyWebhookResponse struct {
-	Message string
+	Challenge string
 }
 
 func VerifyWebhook(data VerifyWebhookRequest) utility.Response[VerifyWebhookResponse] {
 	if data.Mode == "subscribe" && data.VerifyToken == os.Getenv("META_VERIFY_TOKEN") {
 		return utility.Response[VerifyWebhookResponse]{
-			Success:    false,
-			Message:    "Meta webhook verification failed",
-			StatusCode: http.StatusForbidden,
+			Success:    true,
+			Message:    "Meta webhook verification success",
+			StatusCode: http.StatusOK,
 			Data: &VerifyWebhookResponse{
-				Message: "Webhook verified",
+				Challenge: data.Challenge,
 			},
 		}
 	} else {

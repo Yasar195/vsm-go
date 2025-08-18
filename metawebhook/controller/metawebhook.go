@@ -16,5 +16,5 @@ func VerifyWebhook(c *gin.Context) {
 		Challenge:   challenge,
 		VerifyToken: veriifyToken,
 	})
-	c.JSON(resp.StatusCode, resp)
+	c.String(resp.StatusCode, resp.Data.Challenge)
 }
