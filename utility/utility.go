@@ -1,10 +1,15 @@
 package utility
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"net/smtp"
+	"os"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,6 +38,22 @@ type Response[T any] struct {
 
 type EmailService struct {
 	config EmailConfig
+}
+
+type WhatsAppMessage struct {
+	MessagingProduct string   `json:"messaging_product"`
+	To               string   `json:"to"`
+	Type             string   `json:"type"`
+	Template         Template `json:"template"`
+}
+
+type Template struct {
+	Name     string   `json:"name"`
+	Language Language `json:"language"`
+}
+
+type Language struct {
+	Code string `json:"code"`
 }
 
 func NewEmailService(config EmailConfig) *EmailService {
@@ -142,4 +163,53 @@ func HashPassword(password string) (string, error) {
 func ComparePassword(hashedPassword, plainPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil
+}
+
+func sendWhatsAppMessage(message WhatsAppMessage) error {
+
+	jsonData, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("error marshaling JSON: %w", err)
+	}
+
+	url := "https://graph.facebook.com/v22.0/749411591586096/messages"
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("error creating request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("WHATSAPP_TOKEN"))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response: %w", err)
+	}
+
+	// Print response details (similar to curl -i)
+	fmt.Printf("Status: %s\n", resp.Status)
+	fmt.Printf("Headers:\n")
+	for key, values := range resp.Header {
+		for _, value := range values {
+			fmt.Printf("%s: %s\n", key, value)
+		}
+	}
+	fmt.Printf("\nResponse Body:\n%s\n", string(body))
+
+	// Check for success
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		fmt.Println("Message sent successfully!")
+	} else {
+		return fmt.Errorf("API returned error status: %s", resp.Status)
+	}
+
+	return nil
 }

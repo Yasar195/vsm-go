@@ -8,6 +8,7 @@ import (
 	authenticationcontroller "visitor-management-system/iam/authentication/controller"
 	usermanagementcontroller "visitor-management-system/iam/usermanagement/controller"
 	logmanagementcontroller "visitor-management-system/logmanagement/controller"
+	metawebhookcontroller "visitor-management-system/metawebhook/controller"
 	middlewares "visitor-management-system/middlewares"
 	notificationmanagementcontroller "visitor-management-system/notificationmanagement/controller"
 	visitormanagementcontrollers "visitor-management-system/visitormanagement/controller"
@@ -76,6 +77,11 @@ func setupRouter() *gin.Engine {
 	logs.Use(middlewares.AuthMiddleware())
 	{
 		logs.GET("/", logmanagementcontroller.GetLogs)
+	}
+
+	webhook := router.Group("/api/meta")
+	{
+		webhook.GET("/verify", metawebhookcontroller.VerifyWebhook)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {
