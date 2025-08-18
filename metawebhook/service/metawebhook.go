@@ -1,6 +1,7 @@
 package metawebhookservice
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"visitor-management-system/utility"
@@ -34,5 +35,14 @@ func VerifyWebhook(data VerifyWebhookRequest) utility.Response[VerifyWebhookResp
 			StatusCode: http.StatusForbidden,
 			Data:       nil,
 		}
+	}
+}
+
+func ReceiveWebhook(data any) utility.Response[any] {
+	fmt.Println(data)
+	return utility.Response[any]{
+		Success:    true,
+		Message:    "Message recieved",
+		StatusCode: http.StatusOK,
 	}
 }

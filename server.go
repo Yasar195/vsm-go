@@ -81,7 +81,8 @@ func setupRouter() *gin.Engine {
 
 	webhook := router.Group("/api/meta")
 	{
-		webhook.GET("/verify", metawebhookcontroller.VerifyWebhook)
+		webhook.GET("/webhook", metawebhookcontroller.VerifyWebhook)
+		webhook.POST("/webhook", metawebhookcontroller.ReceiveWebhook)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {
