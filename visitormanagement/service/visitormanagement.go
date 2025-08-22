@@ -6,43 +6,12 @@ import (
 	"visitor-management-system/db"
 	"visitor-management-system/db/schema"
 	"visitor-management-system/utility"
+	visitormanagementtypes "visitor-management-system/visitormanagement/types"
+
+	"gorm.io/gorm"
 )
 
-type CreateVisitorRequest struct {
-	VisitorName    string `json:"visitorName" validate:"required"`
-	VisitorEmail   string `json:"visitorEmail" validate:"required,email"`
-	VisitorPhone   string `json:"visitorPhone" validate:"required"`
-	VisitorAddress string `json:"visitorAddress" validate:"required"`
-	UserId         int64  `json:"userId"`
-}
-
-type CreateVisitoryResponse struct {
-	Message string `json:"message"`
-}
-
-type GetVisitorsResponse struct {
-	Visitors []schema.Visitor `json:"visitors"`
-	Count    int64            `json:"count"`
-}
-
-type GetVisitsResponse struct {
-	Visits []schema.Visits `json:"visits"`
-	Count  int64           `json:"count"`
-}
-
-type GetUserRequest struct {
-	PageSize int64
-	Page     int64
-	Search   string
-}
-
-type CreateVisitsInput struct {
-	UserId       int64  `json:"userId" validate:"required"`
-	VisitorId    int64  `json:"visitorId" validate:"required"`
-	VisitPurpose string `json:"visitPurpose"`
-}
-
-func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryResponse] {
+func CreateVisitor(data visitormanagementtypes.CreateVisitorRequest) utility.Response[visitormanagementtypes.CreateVisitoryResponse] {
 	var visitor = schema.Visitor{
 		VisitorName:    data.VisitorName,
 		VisitorEmail:   data.VisitorEmail,
@@ -54,7 +23,7 @@ func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryRes
 	err := db.DB.Create(&visitor).Error
 
 	if err != nil {
-		return utility.Response[CreateVisitoryResponse]{
+		return utility.Response[visitormanagementtypes.CreateVisitoryResponse]{
 			Success:    false,
 			Message:    "User creation failed",
 			Data:       nil,
@@ -63,9 +32,9 @@ func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryRes
 		}
 	}
 
-	return utility.Response[CreateVisitoryResponse]{
+	return utility.Response[visitormanagementtypes.CreateVisitoryResponse]{
 		Success: true,
-		Data: &CreateVisitoryResponse{
+		Data: &visitormanagementtypes.CreateVisitoryResponse{
 			Message: "Visitor created successfully",
 		},
 		Message:    "Visitor creation success",
@@ -73,10 +42,10 @@ func CreateVisitor(data CreateVisitorRequest) utility.Response[CreateVisitoryRes
 	}
 }
 
-func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
+func GetVisitors(data visitormanagementtypes.GetUserRequest) utility.Response[visitormanagementtypes.GetVisitorsResponse] {
 
 	offset := (data.Page - 1) * data.PageSize
-	var visitors []schema.Visitor
+	var visitors []visitormanagementtypes.VisitorOriginalResponse
 	var count int64
 	var err, cerr error
 	var wg sync.WaitGroup
@@ -85,7 +54,7 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 
 	go func() {
 		defer wg.Done()
-		err = db.DB.Model(&schema.Visitor{}).Where("visitor_name ILIKE ?", "%"+data.Search+"%").Offset(int(offset)).Limit(int(data.PageSize)).Find(&visitors).Error
+		err = db.DB.Model(&schema.Visitor{}).Select("id, visitor_name, visitor_email, visitor_phone, visitor_address, is_verified").Where("visitor_name ILIKE ?", "%"+data.Search+"%").Offset(int(offset)).Limit(int(data.PageSize)).Find(&visitors).Error
 	}()
 
 	go func() {
@@ -96,7 +65,7 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 	wg.Wait()
 
 	if err != nil {
-		return utility.Response[GetVisitorsResponse]{
+		return utility.Response[visitormanagementtypes.GetVisitorsResponse]{
 			Success:    false,
 			Message:    "Failed to fetch visitors",
 			Data:       nil,
@@ -106,7 +75,7 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 	}
 
 	if cerr != nil {
-		return utility.Response[GetVisitorsResponse]{
+		return utility.Response[visitormanagementtypes.GetVisitorsResponse]{
 			Success:    false,
 			Message:    "Failed to fetch visitors",
 			Data:       nil,
@@ -115,9 +84,9 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 		}
 	}
 
-	return utility.Response[GetVisitorsResponse]{
+	return utility.Response[visitormanagementtypes.GetVisitorsResponse]{
 		Success: true,
-		Data: &GetVisitorsResponse{
+		Data: &visitormanagementtypes.GetVisitorsResponse{
 			Visitors: visitors,
 			Count:    count,
 		},
@@ -126,7 +95,7 @@ func GetVisitors(data GetUserRequest) utility.Response[GetVisitorsResponse] {
 	}
 }
 
-func CreateVisits(data CreateVisitsInput) utility.Response[CreateVisitoryResponse] {
+func CreateVisits(data visitormanagementtypes.CreateVisitsInput) utility.Response[visitormanagementtypes.CreateVisitoryResponse] {
 	var visit = schema.Visits{
 		UserID:        uint(data.UserId),
 		VisitorID:     uint(data.VisitorId),
@@ -137,7 +106,7 @@ func CreateVisits(data CreateVisitsInput) utility.Response[CreateVisitoryRespons
 	err := db.DB.Create(&visit).Error
 
 	if err != nil {
-		return utility.Response[CreateVisitoryResponse]{
+		return utility.Response[visitormanagementtypes.CreateVisitoryResponse]{
 			Success:    false,
 			Message:    "Visit creation failed",
 			Data:       nil,
@@ -146,9 +115,9 @@ func CreateVisits(data CreateVisitsInput) utility.Response[CreateVisitoryRespons
 		}
 	}
 
-	return utility.Response[CreateVisitoryResponse]{
+	return utility.Response[visitormanagementtypes.CreateVisitoryResponse]{
 		Success: true,
-		Data: &CreateVisitoryResponse{
+		Data: &visitormanagementtypes.CreateVisitoryResponse{
 			Message: "Visit created successfullys",
 		},
 		Message:    "Visit created successfully",
@@ -156,29 +125,42 @@ func CreateVisits(data CreateVisitsInput) utility.Response[CreateVisitoryRespons
 	}
 }
 
-func GetVisits(data GetUserRequest) utility.Response[GetVisitsResponse] {
+func GetVisits(data visitormanagementtypes.GetUserRequest) utility.Response[visitormanagementtypes.GetVisitsResponse] {
 	offset := (data.Page - 1) * data.PageSize
-	var visits []schema.Visits
+	var visits []visitormanagementtypes.VisitResponse
 	var count int64
 	var err, cerr error
 	var wg sync.WaitGroup
+
+	query := db.DB.Model(&schema.Visits{}).Select("id, visit_status, visit_purpose, user_id, visitor_id")
+
+	if data.VisitorStatus != nil && *data.VisitorStatus != "" {
+		query = query.Where("visit_status = ?", data.VisitorStatus)
+	}
+	if data.VisitorId != nil {
+		query = query.Where("visitor_id = ?", *data.VisitorId)
+	}
 
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
-		err = db.DB.Model(&schema.Visits{}).Preload("User").Preload("Visitor").Offset(int(offset)).Limit(int(data.PageSize)).Find(&visits).Error
+		err = query.Session(&gorm.Session{}).Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, user_name, user_email")
+		}).Preload("Visitor", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, visitor_name, visitor_email, visitor_phone")
+		}).Offset(int(offset)).Limit(int(data.PageSize)).Find(&visits).Error
 	}()
 
 	go func() {
 		defer wg.Done()
-		cerr = db.DB.Model(&schema.Visits{}).Count(&count).Error
+		cerr = query.Session(&gorm.Session{}).Count(&count).Error
 	}()
 
 	wg.Wait()
 
 	if err != nil {
-		return utility.Response[GetVisitsResponse]{
+		return utility.Response[visitormanagementtypes.GetVisitsResponse]{
 			Success:    false,
 			Message:    "Failed to fetch visits",
 			Data:       nil,
@@ -188,7 +170,7 @@ func GetVisits(data GetUserRequest) utility.Response[GetVisitsResponse] {
 	}
 
 	if cerr != nil {
-		return utility.Response[GetVisitsResponse]{
+		return utility.Response[visitormanagementtypes.GetVisitsResponse]{
 			Success:    false,
 			Message:    "Failed to fetch visits",
 			Data:       nil,
@@ -197,9 +179,9 @@ func GetVisits(data GetUserRequest) utility.Response[GetVisitsResponse] {
 		}
 	}
 
-	return utility.Response[GetVisitsResponse]{
+	return utility.Response[visitormanagementtypes.GetVisitsResponse]{
 		Success: true,
-		Data: &GetVisitsResponse{
+		Data: &visitormanagementtypes.GetVisitsResponse{
 			Visits: visits,
 			Count:  count,
 		},

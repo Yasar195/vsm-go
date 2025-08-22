@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	visitormanagementservice "visitor-management-system/visitormanagement/service"
+	visitormanagementtypes "visitor-management-system/visitormanagement/types"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -15,7 +16,7 @@ var validate = validator.New()
 func CreateVisitor(c *gin.Context) {
 	claims := c.MustGet("claims").(jwt.MapClaims)
 	userID := int64(claims["user_id"].(float64))
-	var body visitormanagementservice.CreateVisitorRequest
+	var body visitormanagementtypes.CreateVisitorRequest
 	body.UserId = userID
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(400, gin.H{
@@ -58,7 +59,7 @@ func GetVisitors(c *gin.Context) {
 		pageSize = 10
 	}
 
-	resp := visitormanagementservice.GetVisitors(visitormanagementservice.GetUserRequest{
+	resp := visitormanagementservice.GetVisitors(visitormanagementtypes.GetUserRequest{
 		PageSize: pageSize,
 		Page:     page,
 		Search:   search,
@@ -69,7 +70,7 @@ func GetVisitors(c *gin.Context) {
 func CreateVisits(c *gin.Context) {
 	claims := c.MustGet("claims").(jwt.MapClaims)
 	userID := int64(claims["user_id"].(float64))
-	var body visitormanagementservice.CreateVisitsInput
+	var body visitormanagementtypes.CreateVisitsInput
 	body.UserId = userID
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(400, gin.H{
@@ -101,6 +102,20 @@ func GetVisits(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("pageSize", "10")
 	search := c.DefaultQuery("search", "")
+	visitorStatusStr := c.Query("visitorStatus")
+	visitorIdStr := c.Query("visitorId")
+
+	var visitorId *int64
+	if visitorIdStr != "" {
+		if parsedId, err := strconv.ParseInt(visitorIdStr, 10, 64); err == nil {
+			visitorId = &parsedId
+		}
+	}
+
+	var visitorStatus *string
+	if visitorStatusStr != "" {
+		visitorStatus = &visitorStatusStr
+	}
 
 	page, err := strconv.ParseInt(pageStr, 10, 64)
 	if err != nil {
@@ -112,10 +127,12 @@ func GetVisits(c *gin.Context) {
 		pageSize = 10
 	}
 
-	resp := visitormanagementservice.GetVisits(visitormanagementservice.GetUserRequest{
-		PageSize: pageSize,
-		Page:     page,
-		Search:   search,
+	resp := visitormanagementservice.GetVisits(visitormanagementtypes.GetUserRequest{
+		PageSize:      pageSize,
+		Page:          page,
+		Search:        search,
+		VisitorStatus: visitorStatus,
+		VisitorId:     visitorId,
 	})
 	c.JSON(resp.StatusCode, resp)
 }

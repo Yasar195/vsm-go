@@ -13,7 +13,7 @@ type Users struct {
 	DeletedAt  *time.Time `json:"deletedAt,omitempty" gorm:"column:deleted_at"`
 	Username   string     `json:"userName" gorm:"column:user_name;not null"`
 	UserEmail  string     `json:"userEmail" gorm:"column:user_email;type:varchar(100);uniqueIndex;not null"`
-	Password   string     `json:"-" gorm:"column:password"` // hide from JSON responses
+	Password   string     `json:"-" gorm:"column:password"`
 	UserType   UserType   `json:"userType" gorm:"column:user_type;type:varchar(20);check:user_type IN ('staff', 'host');not null"`
 	UserStatus UserStatus `json:"userStatus" gorm:"column:user_status;type:varchar(20);check:user_status IN ('active','inactive');not null;default:'active'"`
 }
