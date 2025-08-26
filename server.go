@@ -11,6 +11,7 @@ import (
 	metawebhookcontroller "visitor-management-system/metawebhook/controller"
 	middlewares "visitor-management-system/middlewares"
 	notificationmanagementcontroller "visitor-management-system/notificationmanagement/controller"
+	ssecontroller "visitor-management-system/sse/controller"
 	visitormanagementcontrollers "visitor-management-system/visitormanagement/controller"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -83,6 +84,11 @@ func setupRouter() *gin.Engine {
 	{
 		webhook.GET("/webhook", metawebhookcontroller.VerifyWebhook)
 		webhook.POST("/webhook", metawebhookcontroller.ReceiveWebhook)
+	}
+
+	sse := router.Group("/api/events")
+	{
+		sse.GET("/", ssecontroller.GetEvents)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {
